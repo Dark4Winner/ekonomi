@@ -1,2 +1,2 @@
 # ekonomi
-v12 Ekononmi Bot = Dark Winner Sunucumuz : https://discord.gg/WhjRcghm8h
+v12 Ekonomi Bot = Dark Winner Sunucumuz : https://discord.gg/WhjRcghm8h
