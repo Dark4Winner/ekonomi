@@ -1,0 +1,368 @@
+module.exports = {
+  config: {
+    name: "kuyumcu",
+    aliases: [],
+    help: {
+      description: "kuyumcu <al/sat/soy>",
+      usage: "kuyumcu <al/sat/soy>",
+      category: "Soygun"
+    },
+    serverOnly: false,
+    ownerOnly: false,
+    permissions: {
+      bot: [],
+      user: []
+    }
+  },
+  run: async function({ message, Discord, db, args, lineUp, settings }) {
+    /*global client*/
+
+    let kuyumcu_islemler = ["al", "sat", "soy"];
+
+    if (!kuyumcu_islemler.includes(args[0]))
+      return message.channel.send(
+        lineUp`Kuyumcuda yapabileceğiniz işlemler: \`${kuyumcu_islemler}\``
+      );
+
+    if (args[0] === "al") {
+      var paran = (await db.fetch(`para_${message.author.id}`)) || 0;
+      if (paran < 6250) {
+        return message.reply(
+          "`Kuyumcu` dükkanına girmek için 6250₺ ye ihtiyacın var. Senin paran: **" +
+            paran +
+            "**"
+        );
+      }
+      if (paran > 6200) {
+        var fiyat = await db.fetch(
+          `kuyumcusatis_${message.author.id}_${message.guild.id}`
+        );
+        var fiyat2 = await db.fetch(
+          `kuyumcusatis4_${message.author.id}_${message.guild.id}`
+        );
+        var fiyat3 = await db.fetch(
+          `kuyumcusatis5_${message.author.id}_${message.guild.id}`
+        );
+        /*     let fiyat = await db.startsWith(`kuyumcusatis_${message.guild.id}`, { sort: '.data'})
+    let content = "";
+
+    for (let i = 0; i < fiyat.length; i++) {
+        let user = client.users.get(fiyat[i].ID.split('_')[2]).user.username
+
+        content += `${i+1}. ${user} ~ ${fiyat[i].data} TL\n`
+    }*/
+        let kuyumcu1 = (await db.fetch(
+          `kuyumcusahip_${message.author.id}_${message.guild.id}`
+        ))
+          ? db.fetch(`kuyumcusahip_${message.author.id}_${message.guild.id}`)
+          : "Yok";
+        let kuyumcu2 = (await db.fetch(
+          `kuyumcusahip4_${message.author.id}_${message.guild.id}`
+        ))
+          ? db.fetch(`kuyumcusahip4_${message.author.id}_${message.guild.id}`)
+          : "Yok";
+        let kuyumcu3 = (await db.fetch(
+          `kuyumcusahip5_${message.author.id}_${message.guild.id}`
+        ))
+          ? db.fetch(`kuyumcusahip5_${message.author.id}_${message.guild.id}`)
+          : "Yok";
+        message.reply(`En güncel **kuyumcu fiyatları**\n
+[1.] Kuyumcu; Sahibi: <@${kuyumcu1}> ~ Fiyatı: ${fiyat || "Yok"} TL
+[2.] Kuyumcu; Sahibi: <@${kuyumcu2}> ~ Fiyatı: ${fiyat2 || "Yok"} TL
+[3.] Kuyumcu; Sahibi: <@${kuyumcu3}> ~ Fiyatı: ${fiyat3 ||
+          "Yok"} TL\n\n\`Beğendiniz kuyumcuyu -kuyumcu al <numarası örnek 2> yazarak alabilirsin\` `);
+      }
+
+      if (args[1] === "1") {
+        let varmı = await db.has(
+          `kuyumcusahip_${message.author.id}_${message.guild.id}`
+        );
+
+        if (varmı === false) {
+          return message.reply(`Belirtilen sayıdaki kuyumcu bulunamadı`);
+        }
+        if (varmı === true) {
+          if (paran < fiyat) {
+            return message.reply(
+              `${fiyat} TL'lik kuyumcuyu satın almak için yeterli paran yok! \n Senin paran ${paran} `
+            );
+          }
+
+          if (paran > fiyat) {
+            message.reply(
+              `<@${db.fetch(
+                `kuyumcusahip_${message.author.id}_${message.guild.id}`
+              )}> Adlı kullanıcının ${fiyat}TL lik kuyumcusunu satın aldınız :tada:`
+            );
+            await db.add(`${message.author.id}.kuyumcu_adet`, 1);
+            await db.set(
+              `${db.fetch(
+                `kuyumcusahip_${message.author.id}_${message.guild.id}`
+              )}.kuyumcu_adet`,
+              -1
+            );
+            await db.set(`para_${message.author.id}`, paran - fiyat);
+            await client.users
+              .get(
+                `${db.fetch(
+                  `kuyumcusahip_${message.guild.id}_${db.fetch(
+                    `kuyumcusahip_${message.author.id}_${message.guild.id}`
+                  )}`
+                )}`
+              )
+              .send(
+                `${message.author.tag} adlı kullanıcı ${fiyat} TL lik 1. kuyumcunu satın aldı.`
+              );
+            await db.set(
+              `paran_${db.fetch(
+                `kuyumcusahip_${message.author.id}_${message.guild.id}`
+              )}`,
+              paran + fiyat
+            );
+            db.delete(
+              `kuyumcusahip_${message.guild.id}_${db.fetch(
+                `kuyumcusahip_${message.author.id}_${message.guild.id}`
+              )}`
+            );
+            await db.delete(
+              `kuyumcusatis_${message.guild.id}_${db.fetch(
+                `kuyumcusatis_${message.author.id}_${message.guild.id}`
+              )}`
+            );
+          }
+        }
+      }
+      if (args[1] === "2") {
+        let varmı = await db.has(
+          `kuyumcusahip4_${message.author.id}_${message.guild.id}`
+        );
+
+        if (varmı === false) {
+          return message.reply(`Belirtilen sayıdaki kuyumcu bulunamadı`);
+        }
+        if (varmı === true) {
+          if (paran < fiyat2) {
+            return message.reply(
+              `${fiyat2} TL'lik kuyumcuyu satın almak için yeterli paran yok! \n Senin paran ${paran} `
+            );
+          }
+
+          if (paran > fiyat) {
+            message.reply(
+              `<@${db.fetch(
+                `kuyumcusahip4_${message.author.id}_${message.guild.id}`
+              )}> Adlı kullanıcının ${fiyat2}TL lik kuyumcusunu satın aldınız :tada:`
+            );
+            await db.add(`${message.author.id}.kuyumcu_adet`, 1);
+            await db.set(
+              `${db.fetch(
+                `kuyumcusahip4_${message.author.id}_${message.guild.id}`
+              )}.kuyumcu_adet`,
+              -1
+            );
+            await db.set(`para_${message.author.id}`, paran - fiyat);
+            await client.users
+              .get(
+                `${db.fetch(
+                  `kuyumcusahip4_${message.guild.id}_${db.fetch(
+                    `kuyumcusahip4_${message.author.id}_${message.guild.id}`
+                  )}`
+                )}`
+              )
+              .send(
+                `${message.author.tag} adlı kullanıcı ${fiyat2} TL lik 2. kuyumcunu satın aldı.`
+              );
+            await db.set(
+              `paran_${db.fetch(
+                `kuyumcusahip4_${message.author.id}_${message.guild.id}`
+              )}`,
+              paran + fiyat
+            );
+            db.delete(
+              `kuyumcusahip4_${message.guild.id}_${db.fetch(
+                `kuyumcusahip4_${message.author.id}_${message.guild.id}`
+              )}`
+            );
+            await db.delete(
+              `kuyumcusatis4_${message.guild.id}_${db.fetch(
+                `kuyumcusatis4_${message.author.id}_${message.guild.id}`
+              )}`
+            );
+          }
+        }
+      }
+      if (args[1] === "3") {
+        let varmı = await db.has(
+          `kuyumcusahip5_${message.author.id}_${message.guild.id}`
+        );
+
+        if (varmı === false) {
+          return message.reply(`Belirtilen sayıdaki kuyumcu bulunamadı`);
+        }
+        if (varmı === true) {
+          if (paran < fiyat3) {
+            return message.reply(
+              `${fiyat3} TL'lik kuyumcuyu satın almak için yeterli paran yok! \n Senin paran ${paran} `
+            );
+          }
+
+          if (paran > fiyat) {
+            message.reply(
+              `<@${db.fetch(
+                `kuyumcusahip5_${message.author.id}_${message.guild.id}`
+              )}> Adlı kullanıcının ${fiyat3}TL lik kuyumcusunu satın aldınız :tada:`
+            );
+            await db.add(`${message.author.id}.kuyumcu_adet`, 1);
+            await db.set(
+              `${db.fetch(
+                `kuyumcusahip5_${message.author.id}_${message.guild.id}`
+              )}.kuyumcu_adet`,
+              -1
+            );
+            await db.set(`para_${message.author.id}`, paran - fiyat);
+            await client.users
+              .get(
+                `${db.fetch(
+                  `kuyumcusahip5_${message.guild.id}_${db.fetch(
+                    `kuyumcusahip5_${message.author.id}_${message.guild.id}`
+                  )}`
+                )}`
+              )
+              .send(
+                `${message.author.tag} adlı kullanıcı ${fiyat3} TL lik 3. kuyumcunu satın aldı.`
+              );
+            await db.set(
+              `paran_${db.fetch(
+                `kuyumcusahip5_${message.author.id}_${message.guild.id}`
+              )}`,
+              paran + fiyat
+            );
+            db.delete(
+              `kuyumcusahip5_${message.guild.id}_${db.fetch(
+                `kuyumcusahip5_${message.author.id}_${message.guild.id}`
+              )}`
+            );
+            await db.delete(
+              `kuyumcusatis5_${message.guild.id}_${db.fetch(
+                `kuyumcusatis5_${message.author.id}_${message.guild.id}`
+              )}`
+            );
+          }
+        }
+      }
+    }
+    if (args[0] === "sat") {
+      let kuyumcuadet = await db.fetch(`${message.author.id}.kuyumcu_adet`);
+      if (!kuyumcuadet) {
+        return message.reply(
+          "`Kuyumcu` **satmak için** `1` **adet kuyumcuya sahip olmalısınız.**"
+        );
+      }
+      if (kuyumcuadet) {
+        if (!args[1])
+          return message.reply(`Kuyumcunu kaç tl satışa çıkarıcaksın?`);
+        message.reply(
+          `Kuyumcunu **${
+            args[1]
+          }** TL'ye satışa çıkardınız. \nNot: \`Kuyumcunuzu satın almak istiyen olursa senin direkt mesajlarına bildiricem.\``
+        );
+        db.set(
+          `kuyumcusatis_${message.author.id}_${message.guild.id}`,
+          args[1]
+        );
+        db.set(
+          `kuyumcusahip_${message.author.id}_${message.guild.id}`,
+          message.author.id
+        );
+        db.set(`${message.author.id}.kuyumcu_adet`, -1);
+        let kuyumcusatis = await db.fetch(
+          `kuyumcusatis_${message.author.id}_${message.guild.id}`
+        );
+        let kuyumcusahip = await db.fetch(
+          `kuyumcusahip_${message.author.id}_${message.guild.id}`
+        );
+
+        if (kuyumcusatis) {
+          db.set(
+            `kuyumcusatis4_${message.author.id}_${message.guild.id}`,
+            args[1]
+          );
+          return;
+        }
+
+        if (kuyumcusahip) {
+          db.set(
+            `kuyumcusahip4_${message.author.id}_${message.guild.id}`,
+            message.author.id
+          );
+          return;
+        }
+
+        let kuyumcusatis2 = await db.fetch(
+          `kuyumcusatis4_${message.author.id}_${message.guild.id}`
+        );
+        let kuyumcusahip2 = await db.fetch(
+          `kuyumcusahip4_${message.author.id}_${message.guild.id}`
+        );
+        
+        if (kuyumcusatis2) {
+          db.set(
+            `kuyumcusatis5_${message.author.id}_${message.guild.id}`,
+            args[1]
+          );
+          return;
+        }
+   
+        if (kuyumcusahip2) {
+          db.set(
+            `kuyumcusahip5_${message.author.id}_${message.guild.id}`,
+            message.author.id
+          );
+          return;
+        }
+    
+      }
+    }
+
+    if (args[0] === "soy") {
+      let ms = require("parse-ms");
+
+      let timeout = 300000;
+
+      let dbs = require("coders.db");
+
+      let weekly = await dbs.fetch(`kuyumcusoygun_${message.author.id}`);
+
+      if (weekly !== null && timeout - (Date.now() - weekly) > 0) {
+        let time = ms(timeout - (Date.now() - weekly));
+
+        message.reply(
+          `Polisler seni heryerde seni arıyor ortalık temizlenince tekrar, kuyumcuyu soyabilirsin yap. (**${time.minutes}dakika ${time.seconds}saniye** beklemelisin)`
+        );
+      } else {
+       var uziadet = await db.fetch(`${message.author.id}.uzi_adet`);
+        if (!uziadet) {
+          message.reply("**Yanında `Uzi` olmadığı için kuyumcuyu soyamadın.**");
+        }
+        if (uziadet) {
+
+          let para = Math.floor(Math.random() * 350) + 1;
+
+          db.add(`para_${message.author.id}`, para);
+
+          db.set(`${message.author.id}.uzi_adet`, uziadet - 1);
+
+          db.set(`kuyumcusoygun_${message.author.id}`, Date.now());
+
+          let embed = new Discord.MessageEmbed()
+            .setDescription(
+              `${message.author.tag}, Kuyumcuyu soydun ve ${para} TL kazandın **burdan uzaklaş polis yaklaşıyor**.`
+            )
+            .setColor("GREEN")
+            .setTimestamp();
+          message.channel.send(embed);
+        }
+      }
+    }
+  }
+};
